@@ -1,0 +1,19 @@
+name: CI
+"on":
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install numpy pytest
+      - run: python -c "from evals.toxicity_eval import score_toxicity; r=score_toxicity('Hello world'); assert not r.is_toxic; print('toxicity eval OK')"
+      - run: python -c "from evals.robustness_eval import introduce_typos, token_overlap; t=introduce_typos('hello world'); assert isinstance(t,str); s=token_overlap('cat sat mat','cat sat'); assert 0<s<=1; print('robustness OK')"
+      - run: python -c "from datasets.safety_prompts import ALL_PROMPTS; assert len(ALL_PROMPTS)==4; print(f'prompts OK: {sum(len(v) for v in ALL_PROMPTS.values())} total')"
+      - run: python run_evals.py --suite quick
